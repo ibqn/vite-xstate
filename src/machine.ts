@@ -19,17 +19,17 @@ const updateFrameCount = assign<Context>((context) => ({
 
 const resetThrows = assign<Context, Event>(() => ({ throws: [] }))
 
-const updateThrows = assign<Context, Event>((context, event) => ({
-  throws: [...context.throws, (event as ThrowEvent).throw],
+const updateThrows = assign<Context, ThrowEvent>((context, event) => ({
+  throws: [...context.throws, event.throw],
 }))
 
-const isStrikeOrSpareInLastFrame = (context: Context, event: Event) =>
+const isStrikeOrSpareInLastFrame = (context: Context, event: Event): event is ThrowEvent =>
   (event as ThrowEvent).throw + (context.throws?.[0] ?? 0) >= 10
 
-const isStrikeAndRegularFrame = (context: Context, event: Event) =>
+const isStrikeAndRegularFrame = (context: Context, event: Event): event is ThrowEvent =>
   (event as ThrowEvent).throw === 10 && context.throws.length === 0 && context.frameIndex < 9
 
-const isStrikeAndLastFrameNext = (context: Context, event: Event) =>
+const isStrikeAndLastFrameNext = (context: Context, event: Event): event is ThrowEvent =>
   (event as ThrowEvent).throw === 10 && context.throws.length === 0 && context.frameIndex === 9
 
 const isLastFrameNext = (context: Context) => context.frameIndex === 9
