@@ -6,7 +6,7 @@ type Frame = {
   throws: number[]
 }
 
-const initialFrames = Array.from({ length: 10 }, () => ({ throws: [] }) as Frame)
+const initialFrames = Array.from({ length: 10 }, (): Frame => ({ throws: [] }))
 
 export const App = () => {
   const [state, send] = useMachine(bowlingMachine)
@@ -19,7 +19,7 @@ export const App = () => {
       return
     }
     const updatedFrames = frames.map((frame, index) =>
-      index === state.context.frameIndex - 1 && frame ? { throws: [...frame.throws, pins] } : frame
+      index === state.context.frameIndex - 1 ? { throws: [...frame.throws, pins] } : frame
     )
     setFrames(updatedFrames)
     send({ type: 'THROW', throw: pins })
@@ -31,10 +31,10 @@ export const App = () => {
   }
 
   return (
-    <main className="flex h-screen items-center justify-center">
+    <main className="flex min-h-screen items-center justify-center">
       <div className="flex flex-col gap-4">
-        <h1 className=" text-3xl font-bold underline">Bowling</h1>
-        <ul className=" list-inside list-disc">
+        <h1 className="text-3xl font-bold underline">Bowling</h1>
+        <ul className="list-inside list-disc">
           <li>frame {state.context.frameIndex}</li>
           <li>
             throws {'['}
@@ -61,7 +61,7 @@ export const App = () => {
           value={pins}
           placeholder="5"
           onChange={(event) => setPins(Number(event.target.value))}
-        />{' '}
+        />
         <button className="rounded bg-slate-300 px-4 py-1" onClick={handleThrow}>
           throw
         </button>
