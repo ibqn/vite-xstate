@@ -1,6 +1,9 @@
 import { useMachine } from '@xstate/react'
 import { bowlingMachine } from '@/machine'
 import { useState } from 'react'
+import { InputPayload, inputValidator } from './input-validator'
+import { useForm, SubmitHandler } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 type Frame = {
   throws: number[]
@@ -11,18 +14,41 @@ const initialFrames = Array.from({ length: 10 }, (): Frame => ({ throws: [] }))
 export const App = () => {
   const [state, send] = useMachine(bowlingMachine)
 
-  const [pins, setPins] = useState(0)
   const [frames, setFrames] = useState(initialFrames)
 
-  const handleThrow = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<InputPayload>({
+    mode: 'all',
+    defaultValues: {},
+    resolver: zodResolver(
+      inputValidator.refine(
+        (data) => {
+          return (state.context.throws.reduce((total, current) => total + current, 0) % 10) + data.input <= 10
+        },
+        () => {
+          const pinsLeft = 10 - (state.context.throws.reduce((total, current) => total + current, 0) % 10)
+          return {
+            message: `only ${pinsLeft} pins left`,
+            path: ['input'], // path of error
+          }
+        }
+      )
+    ),
+  })
+
+  const handleThrow: SubmitHandler<InputPayload> = (data) => {
     if (state.matches('completed')) {
       return
     }
+
     const updatedFrames = frames.map((frame, index) =>
-      index === state.context.frameIndex - 1 ? { throws: [...frame.throws, pins] } : frame
+      index === state.context.frameIndex - 1 ? { throws: [...frame.throws, data.input] } : frame
     )
     setFrames(updatedFrames)
-    send({ type: 'THROW', throw: pins })
+    send({ type: 'THROW', throw: data.input })
   }
 
   const restart = () => {
@@ -55,16 +81,14 @@ export const App = () => {
             </li>
           )}
         </ul>
-        <input
-          className="rounded border border-slate-400"
-          type="text"
-          value={pins}
-          placeholder="5"
-          onChange={(event) => setPins(Number(event.target.value))}
-        />
-        <button className="rounded bg-slate-300 px-4 py-1" onClick={handleThrow}>
-          throw
-        </button>
+        <form className="flex flex-col gap-2" onSubmit={handleSubmit(handleThrow)}>
+          <input className="rounded border border-slate-400 p-1" {...register('input', { valueAsNumber: true })} />
+          {errors?.input && <p className="text-sm text-red-500">{errors.input.message}</p>}
+          <button type="submit" className="rounded bg-slate-300 px-4 py-1">
+            throw
+          </button>
+        </form>
+
         <div className="">
           <h2 className="text-2xl">frames</h2>
           <ol className="list-inside list-decimal">
